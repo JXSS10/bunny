@@ -342,6 +342,45 @@
                 background: rgba(74, 222, 128, 0.15);
             }
         }
+
+        .subject-selector {
+            margin: 1rem 0;
+        }
+
+        .subject-option {
+            cursor: pointer;
+        }
+
+        .subject-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: rgba(17, 24, 39, 0.8);
+            border: 2px solid rgba(74, 222, 128, 0.1);
+            border-radius: 12px;
+            color: #4ade80;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .subject-option input:checked + .subject-card {
+            background: rgba(74, 222, 128, 0.1);
+            border-color: #4ade80;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
+        }
+
+        .subject-card:hover {
+            border-color: rgba(74, 222, 128, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .subject-info {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body class="text-gray-100">
@@ -386,6 +425,56 @@
                     </svg>
                     Clear Cache
                 </button>
+            </div>
+
+            <!-- Add this after the URL input and before the terminal -->
+            <div class="subject-selector mb-4">
+                <div class="text-green-400 mb-2 text-sm">Optional: Choose subject folder</div>
+                <div class="flex flex-wrap gap-3">
+                    <label class="subject-option">
+                        <input type="radio" name="subject" value="PHY" class="hidden">
+                        <div class="subject-card">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Physics</span>
+                            <span class="subject-info" id="phy-info">0 files</span>
+                        </div>
+                    </label>
+                    
+                    <label class="subject-option">
+                        <input type="radio" name="subject" value="CHEM" class="hidden">
+                        <div class="subject-card">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                            <span>Chemistry</span>
+                            <span class="subject-info" id="chem-info">0 files</span>
+                        </div>
+                    </label>
+
+                    <label class="subject-option">
+                        <input type="radio" name="subject" value="MATHS" class="hidden">
+                        <div class="subject-card">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <span>Maths</span>
+                            <span class="subject-info" id="maths-info">0 files</span>
+                        </div>
+                    </label>
+
+                    <label class="subject-option">
+                        <input type="radio" name="subject" value="BIO" class="hidden">
+                        <div class="subject-card">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            <span>Biology</span>
+                            <span class="subject-info" id="bio-info">0 files</span>
+                        </div>
+                    </label>
+                </div>
             </div>
 
             <!-- Terminal Window -->
@@ -636,17 +725,24 @@
 
         async function startDownload(quality) {
             if (!currentVideoData) return;
-            const customFileName = document.getElementById('fileName').value;
-            if (!customFileName) {
-                addTerminalMessage('Please enter a filename', 'error');
-                return;
-            }
-
+            
             try {
                 document.getElementById('qualityUrls').style.display = 'none';
-                addTerminalMessage(`Starting download for ${quality}... & Check Progress in termux`);
+                
+                // Get selected subject (if any)
+                const selectedSubject = document.querySelector('input[name="subject"]:checked')?.value;
+                if (selectedSubject) {
+                    addTerminalMessage(`📁 Selected folder: ${selectedSubject}`, 'info');
+                }
 
-                const finalFileName = `${customFileName}-MrGadhvii-.mp4`;
+                const params = new URLSearchParams(window.location.search);
+                const userFileName = params.get('FileName');
+                const finalFileName = userFileName ? 
+                    `${decodeURIComponent(userFileName)}-MrGadhvii-.mp4` : 
+                    'Made By MrGadhvii.mp4';
+
+                addTerminalMessage(`Starting download for ${quality}...`);
+
                 const response = await fetch('/download', {
                     method: 'POST',
                     headers: {
@@ -660,48 +756,50 @@
                         secret: currentVideoData.secret,
                         server_id: currentVideoData.server_id,
                         embed_url: document.getElementById('urlInput').value,
-                        file_name: finalFileName
+                        file_name: finalFileName,
+                        subject: selectedSubject  // Add selected subject
                     })
                 });
 
-                // Read the response stream
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-
-                while (true) {
-                    const {value, done} = await reader.read();
-                    if (done) break;
-                    
-                    const text = decoder.decode(value);
-                    const lines = text.split('\n');
-                    
-                    for (const line of lines) {
-                        if (line.trim()) {
-                            // Parse download progress information
-                            if (line.includes('[download]')) {
-                                if (line.includes('of ~')) {
-                                    // Fragment progress
-                                    const match = line.match(/(\d+) of ~(\d+)/);
-                                    if (match) {
-                                        addTerminalMessage(`Fragment: ${match[1]}/${match[2]}`, 'info', true);
-                                    }
-                                } else if (line.includes('ETA')) {
-                                    // Download progress with speed and ETA
-                                    addTerminalMessage(line.replace('[download] ', ''), 'info', true);
-                                }
-                            } else {
-                                // Other messages
-                                addTerminalMessage(line, 'info');
-                            }
-                        }
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    addTerminalMessage('✅ Download completed successfully!', 'success');
+                    if (selectedSubject) {
+                        addTerminalMessage(`📂 Saved in ${selectedSubject} folder`, 'success');
                     }
+                    updateSubjectInfo();  // Update folder info
+                } else {
+                    throw new Error(result.message);
                 }
 
-                addTerminalMessage('Download completed successfully!', 'info');
             } catch (error) {
-                addTerminalMessage(`Download failed: ${error.message}`, 'error');
+                addTerminalMessage(`❌ Download failed: ${error.message}`, 'error');
             }
         }
+
+        // Function to update subject folder info
+        async function updateSubjectInfo() {
+            try {
+                const response = await fetch('/subjects');
+                const data = await response.json();
+                
+                Object.entries(data).forEach(([subject, info]) => {
+                    const infoElement = document.getElementById(`${subject.toLowerCase()}-info`);
+                    if (infoElement) {
+                        infoElement.textContent = `${info.count} files (${info.size})`;
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to fetch subject info:', error);
+            }
+        }
+
+        // Update subject info on page load and periodically
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSubjectInfo();
+            setInterval(updateSubjectInfo, 30000); // Update every 30 seconds
+        });
 
         // Add the clearCache function to your existing script
         async function clearCache() {
