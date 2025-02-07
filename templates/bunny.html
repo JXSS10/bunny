@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BunnyCDN Downloader - by MrGadhvii</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        .terminal-text {
+            overflow: hidden;
+            border-right: .15em solid #4ade80;
+            white-space: pre;
+            animation: 
+                typing 1s steps(40, end),
+                blink-caret .75s step-end infinite;
+        }
+
+        .glass-card {
+            background: rgba(17, 25, 40, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.125);
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        /* Compact mobile design */
+        @media (max-width: 640px) {
+            .container { padding: 0.5rem; }
+            .terminal { font-size: 0.75rem; }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(17, 25, 40, 0.75);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4ade80;
+            border-radius: 3px;
+        }
+
+        .terminal-window {
+            background: rgba(28, 30, 38, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terminal-header {
+            background: rgba(40, 42, 54, 0.9);
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .terminal-dot:hover {
+            transform: scale(1.2);
+        }
+
+        .terminal-body {
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #a8ffb0;
+        }
+
+        .terminal-text {
+            opacity: 0;
+            animation: fadeIn 0.3s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring__circle {
+            stroke: #4ade80;
+            stroke-dasharray: 326.726;
+            stroke-dashoffset: 326.726;
+            transition: stroke-dashoffset 0.35s;
+        }
+
+        /* Typing animation for terminal messages */
+        .typing {
+            border-right: 2px solid #4ade80;
+            animation: blink 0.75s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: #4ade80 }
+        }
+
+        /* Quality Selection Buttons */
+        .quality-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .quality-btn {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quality-btn:hover {
+            background: rgba(76, 175, 80, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .quality-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Filename Input */
+        .filename-container {
+            margin-top: 20px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .filename-input {
+            width: 100%;
+            background: rgba(40, 42, 54, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .filename-input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+            outline: none;
+        }
+
+        .filename-suffix {
+            color: #888;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 8px;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success Message */
+        .success-message {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -1px;
+            left: 0;
+            background: linear-gradient(90deg, #4CAF50, #81C784);
+            animation: loading 1s infinite linear;
+        }
+
+        @keyframes loading {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+
+        /* Add these new styles */
+        .header-container {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 0;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .logo-container {
+            margin-bottom: 1rem;
+        }
+
+        .logo-animation {
+            display: inline-block;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(34, 197, 94, 0.2));
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .bunny-icon {
+            width: 48px;
+            height: 48px;
+            color: #4ade80;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .main-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .author-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(74, 222, 128, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .author-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
+        }
+
+        .author-text {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+        }
+
+        .author-name {
+            color: #4ade80;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* Dark mode optimization */
+        @media (prefers-color-scheme: dark) {
+            .main-title {
+                text-shadow: 0 0 30px rgba(74, 222, 128, 0.3);
+            }
+            
+            .author-badge {
+                background: rgba(74, 222, 128, 0.15);
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <div class="container mx-auto max-w-2xl px-4 py-4">
+        <!-- Credit Badge -->
+        <div class="fixed top-2 right-2 glass-card rounded-full px-3 py-1.5 text-xs">
+            By <span class="text-green-400 font-bold">MrGadhvii</span>
+        </div>
+
+        <!-- Main Content -->
+        <div class="space-y-4">
+            <!-- Title -->
+            <div class="header-container">
+                <div class="logo-container">
+                    <div class="logo-animation">
+                        <svg class="bunny-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="main-title">BunnyCDN Downloader</h1>
+                <div class="author-badge">
+                    <span class="author-text">by</span>
+                    <span class="author-name">MrGadhvii</span>
+                </div>
+            </div>
+
+            <!-- Add this right after the URL input section -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex-grow">
+                    <input type="text" id="urlInput" placeholder="Enter BunnyCDN URL" class="w-full px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <button onclick="analyzeUrl()" class="ml-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Analyze
+                </button>
+                <button onclick="clearCache()" class="ml-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Clear Cache
+                </button>
+            </div>
+
+            <!-- Terminal Window -->
+            <div class="terminal-window mb-4">
+                <div class="terminal-header">
+                    <div class="terminal-dot bg-red-500"></div>
+                    <div class="terminal-dot bg-yellow-500"></div>
+                    <div class="terminal-dot bg-green-500"></div>
+                    <span class="text-sm text-gray-400">Terminal</span>
+                </div>
+                <div id="messages" class="terminal-body">
+                    <!-- Terminal messages will appear here -->
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="hidden space-y-3">
+                <!-- Filename Input -->
+                <div class="filename-container">
+                    <input 
+                        type="text" 
+                        id="fileName" 
+                        class="filename-input" 
+                        placeholder="Enter file name"
+                        autocomplete="off"
+                    >
+                    <div class="filename-suffix">-MrGadhvii-.mp4</div>
+                </div>
+
+                <!-- Quality Selection -->
+                <div id="qualityUrls" class="quality-container" style="display: none;">
+                    <button onclick="startDownload('240p')" class="quality-btn">
+                        Download 240p
+                    </button>
+                    <button onclick="startDownload('360p')" class="quality-btn">
+                        Download 360p
+                    </button>
+                    <button onclick="startDownload('720p')" class="quality-btn">
+                        Download 720p
+                    </button>
+                </div>
+            </div>
+
+            <!-- Download Progress -->
+            <div id="downloadProgress" class="hidden glass-card p-6">
+                <div class="flex items-center justify-center gap-8">
+                    <!-- Circular Progress -->
+                    <svg class="progress-ring" width="120" height="120">
+                        <circle class="progress-ring__circle" stroke="currentColor" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                    </svg>
+                    <!-- Speed & ETA -->
+                    <div class="text-center">
+                        <div id="downloadSpeed" class="text-2xl font-bold text-green-400">0 MB/s</div>
+                        <div id="downloadEta" class="text-sm text-gray-400">ETA: --:--</div>
+                    </div>
+                </div>
+                
+                <!-- Fragment Progress -->
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm text-gray-400">
+                        <span>Fragments</span>
+                        <span id="fragmentProgress">0/0</span>
+                    </div>
+                    <div class="h-2 bg-gray-700 rounded-full mt-1">
+                        <div id="fragmentBar" class="h-full bg-green-400 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variable to store video data
+        let currentVideoData = null;
+
+        function addTerminalMessage(message, type = 'info', replace = false) {
+            const messages = document.getElementById('messages');
+            
+            if (replace && messages.lastChild) {
+                messages.lastChild.remove();
+            }
+            
+            const msgElement = document.createElement('div');
+            msgElement.className = `terminal-text ${type === 'error' ? 'text-red-400' : 'text-green-400'} mb-2`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            msgElement.textContent = `[${timestamp}] ${message}`;
+            
+            messages.appendChild(msgElement);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateProgress(data) {
+            const progressElement = document.getElementById('downloadProgress');
+            progressElement.classList.remove('hidden');
+
+            if (data.type === 'fragment') {
+                document.getElementById('fragmentProgress').textContent = `${data.current}/${data.total}`;
+                const percent = (data.current / data.total) * 100;
+                document.getElementById('fragmentBar').style.width = `${percent}%`;
+                updateCircularProgress(percent);
+            }
+
+            if (data.speed) {
+                document.getElementById('downloadSpeed').textContent = data.speed;
+            }
+            if (data.eta) {
+                document.getElementById('downloadEta').textContent = `ETA: ${data.eta}`;
+            }
+        }
+
+        function updateCircularProgress(percent) {
+            const circle = document.querySelector('.progress-ring__circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // Function to handle URL parameters and filename
+        function handleUrlParameters() {
+            if (!document.getElementById('urlInput')) {
+                console.log('URL input not found, waiting...');
+                setTimeout(handleUrlParameters, 100);
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const videoUrl = params.get('url');
+
+            if (videoUrl) {
+                try {
+                    const urlInput = document.getElementById('urlInput');
+                    urlInput.value = decodeURIComponent(videoUrl);
+                    addTerminalMessage('🎥 Video URL loaded', 'info');
+
+                    const fileName = params.get('FileName');
+                    const finalFileName = fileName ? 
+                        `${decodeURIComponent(fileName)}-MrGadhvii-.mp4` : 
+                        'Made By MrGadhvii.mp4';
+                    addTerminalMessage(`📝 Will save as: ${finalFileName}`, 'info');
+
+                    // Call analyzeUrl directly
+                    analyzeUrl();
+                } catch (error) {
+                    console.error('Error handling URL parameters:', error);
+                    addTerminalMessage(`❌ Error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Update analyzeUrl function
+        async function analyzeUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const messages = document.getElementById('messages');
+            const results = document.getElementById('results');
+            
+            if (!urlInput || !urlInput.value) {
+                addTerminalMessage('❌ Please enter a URL', 'error');
+                return;
+            }
+
+            try {
+                addTerminalMessage('🔍 Analyzing URL...', 'info');
+                
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `url=${encodeURIComponent(urlInput.value)}`
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                currentVideoData = data;
+                addTerminalMessage('✅ Analysis complete! Available qualities:', 'success');
+
+                // Show quality buttons
+                const qualityUrls = document.getElementById('qualityUrls');
+                if (qualityUrls) {
+                    qualityUrls.style.display = 'grid';
+                    // Log available qualities
+                    Object.keys(data.urls).forEach(quality => {
+                        addTerminalMessage(`📺 ${quality}: ${data.urls[quality].resolution}`, 'info');
+                    });
+                }
+
+                if (results) {
+                    results.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('Analysis error:', error);
+                addTerminalMessage(`❌ Analysis failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Add this function to show the response data
+        function logResponseData(data) {
+            console.log('Analysis Response:', data);
+            addTerminalMessage('🔍 Debug: Received response data', 'info');
+            if (data.urls) {
+                Object.keys(data.urls).forEach(quality => {
+                    console.log(`Quality: ${quality}`, data.urls[quality]);
+                });
+            }
+        }
+
+        // Wait for DOM to be fully loaded before initializing
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', handleUrlParameters);
+        } else {
+            handleUrlParameters();
+        }
+
+        // Add this function to manually trigger URL parameter handling
+        function checkUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoUrl = urlParams.get('url');
+            const fileName = urlParams.get('FileName');
+            
+            if (fileName) {
+                const fileNameInput = document.getElementById('fileName');
+                if (fileNameInput) {
+                    let cleanFileName = decodeURIComponent(fileName)
+                        .replace(/-MrGadhvii-\.mp4$/, '')
+                        .replace(/\.mp4$/, '')
+                        .trim();
+                    
+                    fileNameInput.value = cleanFileName;
+                    addTerminalMessage(`📝 Filename set manually: ${cleanFileName}`, 'info');
+                }
+            }
+        }
+
+        // Call checkUrlParameters after a short delay
+        setTimeout(checkUrlParameters, 1500);
+
+        async function startDownload(quality) {
+            if (!currentVideoData) return;
+            const customFileName = document.getElementById('fileName').value;
+            if (!customFileName) {
+                addTerminalMessage('Please enter a filename', 'error');
+                return;
+            }
+
+            try {
+                document.getElementById('qualityUrls').style.display = 'none';
+                addTerminalMessage(`Starting download for ${quality}... & Check Progress in termux`);
+
+                const finalFileName = `${customFileName}-MrGadhvii-.mp4`;
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: currentVideoData.urls[quality].url,
+                        quality: currentVideoData.urls[quality].resolution,
+                        guid: currentVideoData.guid,
+                        context_id: currentVideoData.context_id,
+                        secret: currentVideoData.secret,
+                        server_id: currentVideoData.server_id,
+                        embed_url: document.getElementById('urlInput').value,
+                        file_name: finalFileName
+                    })
+                });
+
+                // Read the response stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+                    
+                    const text = decoder.decode(value);
+                    const lines = text.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            // Parse download progress information
+                            if (line.includes('[download]')) {
+                                if (line.includes('of ~')) {
+                                    // Fragment progress
+                                    const match = line.match(/(\d+) of ~(\d+)/);
+                                    if (match) {
+                                        addTerminalMessage(`Fragment: ${match[1]}/${match[2]}`, 'info', true);
+                                    }
+                                } else if (line.includes('ETA')) {
+                                    // Download progress with speed and ETA
+                                    addTerminalMessage(line.replace('[download] ', ''), 'info', true);
+                                }
+                            } else {
+                                // Other messages
+                                addTerminalMessage(line, 'info');
+                            }
+                        }
+                    }
+                }
+
+                addTerminalMessage('Download completed successfully!', 'info');
+            } catch (error) {
+                addTerminalMessage(`Download failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Add the clearCache function to your existing script
+        async function clearCache() {
+            try {
+                addTerminalMessage("🧹 Cleaning cache...");
+                const response = await fetch('/clear-cache', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    addTerminalMessage(`✨ ${data.message}`, 'success');
+                } else {
+                    addTerminalMessage(`❌ ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addTerminalMessage(`❌ Failed to clear cache: ${error}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BunnyCDN Downloader - by MrGadhvii</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Add your custom styles here */
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-body {
+            padding: 16px;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- Add your modern UI HTML here -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto space-y-6">
+            <!-- Header -->
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
+                    BunnyCDN Downloader
+                </h1>
+                <p class="text-gray-400 mt-2">Created by MrGadhvii</p>
+            </div>
+
+            <!-- Terminal Window -->
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <div class="terminal-dot bg-red-500"></div>
+                    <div class="terminal-dot bg-yellow-500"></div>
+                    <div class="terminal-dot bg-green-500"></div>
+                    <span class="text-sm text-gray-400">Terminal</span>
+                </div>
+                <div id="terminal" class="terminal-body">
+                    <!-- Terminal messages will be added here -->
+                </div>
+            </div>
+
+            <!-- Download Progress -->
+            <div id="downloadProgress" class="hidden">
+                <!-- Add circular progress indicator -->
+                <div class="flex items-center justify-center gap-8">
+                    <svg class="progress-ring" width="120" height="120">
+                        <circle class="progress-ring__circle" stroke="currentColor" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                    </svg>
+                    <div class="text-center">
+                        <div id="downloadSpeed" class="text-2xl font-bold text-green-400">0 MB/s</div>
+                        <div id="downloadEta" class="text-sm text-gray-400">ETA: --:--</div>
+                    </div>
+                </div>
+                
+                <!-- Fragment Progress -->
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm text-gray-400">
+                        <span>Fragments</span>
+                        <span id="fragmentProgress">0/0</span>
+                    </div>
+                    <div class="h-2 bg-gray-700 rounded-full mt-1">
+                        <div id="fragmentBar" class="h-full bg-green-400 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Cancel Button -->
+                <button id="cancelBtn" class="mt-4 w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition">
+                    Cancel Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add your Socket.IO JavaScript here
+        const socket = io();
+        const terminal = document.getElementById('terminal');
+        
+        socket.on('connect', () => {
+            addTerminalMessage('Connected to server', 'success');
+        });
+
+        socket.on('disconnect', () => {
+            addTerminalMessage('Disconnected from server', 'error');
+        });
+
+        socket.on('server_log', (data) => {
+            addTerminalMessage(data.message, data.type, data.timestamp);
+        });
+
+        socket.on('download_progress', (data) => {
+            updateProgress(data);
+        });
+
+        function addTerminalMessage(message, type = 'info', timestamp = null) {
+            const msgElement = document.createElement('div');
+            msgElement.className = `mb-2 ${type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-gray-300'}`;
+            
+            const time = timestamp || new Date().toLocaleTimeString();
+            msgElement.textContent = `[${time}] ${message}`;
+            
+            terminal.appendChild(msgElement);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function updateProgress(data) {
+            const progressElement = document.getElementById('downloadProgress');
+            progressElement.classList.remove('hidden');
+
+            if (data.type === 'fragment') {
+                document.getElementById('fragmentProgress').textContent = `${data.current}/${data.total}`;
+                const percent = (data.current / data.total) * 100;
+                document.getElementById('fragmentBar').style.width = `${percent}%`;
+            } else if (data.type === 'overall') {
+                document.getElementById('downloadSpeed').textContent = data.speed;
+                document.getElementById('downloadEta').textContent = `ETA: ${data.eta}`;
+                updateCircularProgress(data.percent);
+            }
+        }
+
+        function updateCircularProgress(percent) {
+            const circle = document.querySelector('.progress-ring__circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (percent / 100) * circumference;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            socket.emit('cancel_download');
+            addTerminalMessage('Download cancelled by user', 'warning');
+        });
+    </script>
+</body>
+</html>
