@@ -236,7 +236,7 @@ def prepare_dl(guid, context_id, secret, server_id, quality, embed_url, session)
         print(f"Prepare download error: {str(e)}")
         return False
 
-def download_video(url, quality, guid, context_id, secret, server_id, embed_url, file_name):
+def download_video(url, quality, guid, context_id, secret, server_id, embed_url, file_name, subject=None):
     """Download video using yt-dlp"""
     try:
         # Ensure cleaner is paused during download
@@ -290,6 +290,19 @@ def download_video(url, quality, guid, context_id, secret, server_id, embed_url,
         log_message("Download completed successfully")
         log_message("Starting cleanup of temporary files...")
         cleaner.paused = False  # This will trigger one cleanup cycle
+
+        # If subject is specified, move file to subject folder
+        if subject and subject.upper() in ['PHY', 'CHEM', 'MATHS', 'BIO']:
+            subject_path = os.path.join(download_path, subject.lower())
+            os.makedirs(subject_path, exist_ok=True)
+            final_path = os.path.join(subject_path, file_name)
+            
+            # Move file to subject directory
+            if os.path.exists(os.path.join(download_path, file_name)):
+                os.rename(os.path.join(download_path, file_name), final_path)
+                print(f"Moved file to {subject.upper()} folder: {final_path}")
+                return True, final_path
+        
         return True, os.path.join(download_path, file_name)
         
     except Exception as e:
@@ -426,20 +439,22 @@ def download():
         server_id = data.get('server_id')
         embed_url = data.get('embed_url')
         file_name = data.get('file_name')
+        subject = data.get('subject')  # Get subject from request
 
         if not all([url, quality, guid, context_id, secret, server_id, embed_url, file_name]):
             return jsonify({'error': 'Missing required parameters'}), 400
 
         success, result = download_video(
             url, quality, guid, context_id, secret, 
-            server_id, embed_url, file_name
+            server_id, embed_url, file_name, subject  # Pass subject to download_video
         )
 
         if success:
             return jsonify({
                 'status': 'success',
                 'message': 'Download completed successfully',
-                'file': result
+                'file': result,
+                'subject': subject if subject else 'default'
             })
         else:
             return jsonify({
