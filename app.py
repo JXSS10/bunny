@@ -46,27 +46,12 @@ def format_size(size_bytes):
     return f"{s} {size_name[i]}"
 # --- End Helper Functions ---
 
-# ---- الصفحة الرئيسية مع الـ GIF ----
+# ---- الصفحة الرئيسية الآن هي أداة التحميل ----
 @app.route('/')
 def home():
-    return """
-<center>
-    <img src="https://i.giphy.com/media/3o7abAHdYvZdBNnGZq/giphy.webp" style="border-radius: 12px;"/>
-</center>
-<style>
-    body {
-        background: antiquewhite;
-    }
-</style>"""
-# ---- نهاية الصفحة الرئيسية ----
-
-
-# ---- صفحة أداة التحميل ----
-@app.route('/downloader')
-def downloader_page():
-    # هذا المسار سيعرض واجهة المستخدم الخاصة بأداة التحميل
+    # هذا المسار الآن سيعرض واجهة المستخدم الخاصة بأداة التحميل (index.html)
     return render_template('index.html')
-# ---- نهاية صفحة أداة التحميل ----
+# ---- نهاية الصفحة الرئيسية ----
 
 
 @app.route('/analyze', methods=['POST'])
